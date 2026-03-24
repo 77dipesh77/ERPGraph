@@ -1,33 +1,26 @@
+import os
 import pandas as pd
-from pathlib import Path
-from database import get_connection
 
-# dataset folder path
-DATASET_PATH = Path(__file__).resolve().parent.parent.parent / "dataset"
+DATASET_PATH = "../../dataset"
 
-def load_tables():
+def load_folder(folder):
+    path = os.path.join(DATASET_PATH, folder)
 
-    conn = get_connection()
+    if not os.path.exists(path):
+        print("Folder not found:", folder)
+        return
 
-    for folder in DATASET_PATH.iterdir():
+    for file in os.listdir(path):
+        if file.endswith(".jsonl"):
+            file_path = os.path.join(path, file)
 
-        if folder.is_dir():
+            df = pd.read_json(file_path, lines=True)
 
-            csv_files = list(folder.glob("*.csv"))
+            print(f"\nLoaded {file}")
+            print("Rows:", len(df))
+            print("Columns:", list(df.columns))
 
-            if not csv_files:
-                continue
+folders = os.listdir(DATASET_PATH)
 
-            df = pd.concat([pd.read_csv(f) for f in csv_files])
-
-            table_name = folder.name
-
-            df.to_sql(table_name, conn, if_exists="replace", index=False)
-
-            print(f"Loaded {table_name}")
-
-    conn.close()
-
-
-if __name__ == "__main__":
-    load_tables()
+for folder in folders:
+    load_folder(folder)
